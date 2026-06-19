@@ -556,7 +556,13 @@ document.getElementById('d').value = new Date().toISOString().slice(0,10);
 try {
   const raw = localStorage.getItem(SK); if (raw) visits = JSON.parse(raw);
   const url = localStorage.getItem(GK);
-  if (url) { gsUrl = url; document.getElementById('gs-url').value = url; document.getElementById('gs-status').className='gs-ok'; document.getElementById('gs-status').textContent='✓ الربط مفعّل'; document.getElementById('no-gs-note').style.display='none'; }
+  if (url) { 
+    gsUrl = url; 
+    document.getElementById('gs-url').value = url; 
+    document.getElementById('gs-status').className='gs-ok'; 
+    document.getElementById('gs-status').textContent='✓ الربط مفعّل'; 
+    document.getElementById('no-gs-note').style.display='none'; 
+  }
 } catch(e) {}
 initPhases();
 updateFilters();
