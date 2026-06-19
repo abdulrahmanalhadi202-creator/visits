@@ -96,7 +96,7 @@ tr:hover td { background: #fafafa; }
 
   <div class="view on" id="v-add">
     <div class="card">
-      <div class="note" id="no-gs-note">⚠️ لا يوجد ربط بـ Google Sheets — الزيارات محفوظة في المتصفح فقط. اذهب لتبويب "Google Sheets" لتفعيل الحفظ التلقائي.</div>
+      <div class="note" id="no-gs-note" style="display:none">⚠️ لا يوجد ربط بـ Google Sheets — الزيارات محفوظة في المتصفح فقط. اذهب لتبويب "Google Sheets" لتفعيل الحفظ التلقائي.</div>
       <div class="g2">
         <div class="field"><label>تاريخ الزيارة</label><input type="date" id="d"></div>
         <div class="field"><label>المشروع</label><select id="proj"><option value="">-- اختر المشروع --</option><option value="عمارة دارفينو السلامة">عمارة دارفينو السلامة</option><option value="فيلا بندر باقعر">فيلا بندر باقعر</option></select></div>
@@ -368,7 +368,8 @@ const GS_CODE = `function doPost(e) {
 }`;
 
 const SK = 'baladi_v3', GK = 'baladi_gs';
-let visits = [], selPhase = null, selItem = null, gsUrl = '';
+const DEFAULT_GS_URL = 'https://script.google.com/macros/s/AKfycbzG7RcJGKIdIWZ2RpC2z48FP-AXS8OUbUIDuXIz7BAtyFP55Ip-5XjrO_NRvI2AUylB/exec';
+let visits = [], selPhase = null, selItem = null, gsUrl = DEFAULT_GS_URL;
 
 function badge(s) {
   if (!s) return '';
@@ -555,14 +556,12 @@ document.getElementById('script-box').value = GS_CODE;
 document.getElementById('d').value = new Date().toISOString().slice(0,10);
 try {
   const raw = localStorage.getItem(SK); if (raw) visits = JSON.parse(raw);
-  const url = localStorage.getItem(GK);
-  if (url) { 
-    gsUrl = url; 
-    document.getElementById('gs-url').value = url; 
-    document.getElementById('gs-status').className='gs-ok'; 
-    document.getElementById('gs-status').textContent='✓ الربط مفعّل'; 
-    document.getElementById('no-gs-note').style.display='none'; 
-  }
+  const url = localStorage.getItem(GK) || DEFAULT_GS_URL;
+  gsUrl = url; 
+  document.getElementById('gs-url').value = url; 
+  document.getElementById('gs-status').className='gs-ok'; 
+  document.getElementById('gs-status').textContent='✓ الربط مفعّل'; 
+  document.getElementById('no-gs-note').style.display='none';
 } catch(e) {}
 initPhases();
 updateFilters();
