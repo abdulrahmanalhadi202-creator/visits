@@ -52,6 +52,18 @@ textarea{resize:vertical;min-height:65px}
 .other-box{background:#f0f6ff;border:1.5px solid #bcd4f0;border-radius:10px;padding:14px;margin-top:10px}
 .other-box label{color:#185FA5;font-size:13px;font-weight:700}
 @media(max-width:600px){.g2{grid-template-columns:1fr}.phases{grid-template-columns:repeat(3,1fr)}}
+
+/* نافذة تأكيد تسجيل الزيارة */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(12,26,43,.55);z-index:9999;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(2px)}
+.modal-overlay.on{display:flex}
+.modal-box{background:#fff;border-radius:16px;max-width:380px;width:100%;padding:28px 22px 22px;text-align:center;position:relative;box-shadow:0 24px 60px rgba(12,26,43,.35);border:1px solid #e5e5e5;animation:modalIn .18s ease-out}
+@keyframes modalIn{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.modal-close{position:absolute;top:10px;left:10px;background:#f1f4f8;border:none;width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;color:#5a6b7d;line-height:1;font-family:inherit}
+.modal-close:hover{background:#e2e8f0;color:#1a1a1a}
+.modal-icon{width:64px;height:64px;background:#eaf6ee;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.modal-title{font-size:18px;font-weight:800;color:#0C447C;margin-bottom:6px}
+.modal-sub{font-size:13px;color:#666;line-height:1.7;margin-bottom:14px}
+.modal-detail{background:#f6f9fc;border:1px solid #e5edf5;border-radius:10px;padding:10px 12px;font-size:12.5px;color:#185FA5;font-weight:600;text-align:right}
 </style>
 </head>
 <body>
@@ -118,6 +130,21 @@ textarea{resize:vertical;min-height:65px}
     </div>
   </div>
 
+</div>
+
+<!-- نافذة تأكيد تسجيل الزيارة -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeSuccessModal()" aria-label="إغلاق">✕</button>
+    <div class="modal-icon">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+        <path d="M20 6L9 17l-5-5" stroke="#1e8e4f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="modal-title">تم تسجيل زيارتك بنجاح</div>
+    <div class="modal-sub">تم حفظ بيانات الزيارة في النظام. لا حاجة لإعادة التسجيل — يمكنك إغلاق هذه الرسالة من علامة (✕).</div>
+    <div class="modal-detail" id="modal-detail"></div>
+  </div>
 </div>
 
 <script>
@@ -401,9 +428,11 @@ function save() {
   try { localStorage.setItem(SK, JSON.stringify(visits)); } catch(e) {}
 
   msg.className = 'msg';
-  msg.textContent = `✓ تم تسجيل: ${phase} - ${itemNum === '-' ? itemDesc.slice(0,30) : 'بند ' + itemNum}`;
+  msg.textContent = '';
 
   sendToSheets(v);
+
+  showSuccessModal(proj, phase, itemNum === '-' ? itemDesc : ('بند ' + itemNum + ' - ' + itemDesc));
 
   // Reset
   document.getElementById('notes').value = '';
@@ -412,7 +441,16 @@ function save() {
   document.querySelectorAll('.itm,.ph').forEach(e => e.classList.remove('sel'));
   document.getElementById('items-wrap').style.display = 'none';
   document.getElementById('other-wrap').style.display = 'none';
-  setTimeout(() => { msg.textContent = ''; }, 4000);
+}
+
+function showSuccessModal(proj, phase, itemLine) {
+  document.getElementById('modal-detail').innerHTML =
+    `المشروع: ${proj}<br>المرحلة: ${phase}<br>${itemLine}`;
+  document.getElementById('successModal').classList.add('on');
+}
+
+function closeSuccessModal() {
+  document.getElementById('successModal').classList.remove('on');
 }
 
 function sendToSheets(v) {
