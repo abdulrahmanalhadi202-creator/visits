@@ -85,9 +85,7 @@ textarea{resize:vertical;min-height:65px}
         <div class="field"><label>تاريخ الزيارة</label><input type="date" id="d"></div>
         <div class="field"><label>المشروع</label>
           <select id="proj">
-            <option value="">-- اختر المشروع --</option>
-            <option value="عمارة دارفينو السلامة">عمارة دارفينو السلامة</option>
-            <option value="فيلا بندر باقعر">فيلا بندر باقعر</option>
+            <option value="">جاري تحميل المشاريع...</option>
           </select>
         </div>
       </div>
@@ -322,6 +320,10 @@ const PHASES = [
 ];
 
 const GS_URL = 'https://script.google.com/macros/s/AKfycbzKU_Peeaz73_D0ATbZb2dazZua-tqhFXtSiqSSd2wR5XZqG5zBqmVjW1T0tN3FpWb1/exec';
+// قائمة المشاريع: تبويب "المشاريع" في Google Sheets منشور كـ CSV
+const PROJECTS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT0soO7NWtjF7zzn68Gub0wTwtYGnIYqGUF7yQUjyoxVsgIhvoTFw8wNI-t-fj9ULU1Lm1cpsVXWIw4/pub?gid=483229239&single=true&output=csv';
+// احتياطي فقط إذا تعذّر تحميل القائمة من الشيت
+const FALLBACK_PROJECTS = ['عمارة دارفينو السلامة', 'فيلا بندر باقعر'];
 const SK = 'baladi_v4';
 const MONTH_NAMES = ['','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 
@@ -386,18 +388,10 @@ function pickOther() {
 }
 
 function pickItem(n) {
+  // اختيار البند لا يغيّر حقل التخصص — يبقى كما اختاره المستخدم
   selItem = selPhase.items.find(i => i.n === n);
   document.querySelectorAll('.itm').forEach(e => e.classList.remove('sel'));
   document.getElementById('it' + n).classList.add('sel');
-  const sp = document.getElementById('spec');
-  const s = selItem.s;
-  if (s.includes('كهربائي')) sp.value = 'مهندس كهربائي';
-  else if (s.includes('ميكانيكا')) sp.value = 'مهندس ميكانيكا';
-  else if (s.includes('إدارة')) sp.value = 'إدارة فريق الإشراف';
-  else if (s.includes('مراقب')) sp.value = 'مراقب معماري';
-  else if (s.includes('مهندس معماري')) sp.value = 'مهندس معماري';
-  else if (s.includes('مساح')) sp.value = 'مساح';
-  else sp.value = 'مهندس مدني';
 }
 
 function save() {
@@ -464,8 +458,34 @@ function sendToSheets(v) {
 
 
 
+function fillProjects(list) {
+  const sel = document.getElementById('proj');
+  sel.innerHTML = '<option value="">-- اختر المشروع --</option>' +
+    list.map(p => `<option value="${p.replace(/"/g,'&quot;')}">${p}</option>`).join('');
+}
+
+function loadProjects() {
+  fetch(PROJECTS_CSV + '&t=' + Date.now())
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
+    .then(txt => {
+      const names = txt.split(/\r?\n/).slice(1)              // تخطي سطر العنوان
+        .map(l => l.split(',')[0].replace(/^"|"$/g,'').trim()) // العمود A فقط
+        .filter(Boolean);                                      // تجاهل الخانات الفارغة
+      const unique = [...new Set(names)];
+      if (!unique.length) throw new Error('empty');
+      fillProjects(unique);
+    })
+    .catch(() => {
+      fillProjects(FALLBACK_PROJECTS);
+      const msg = document.getElementById('msg');
+      msg.className = 'msg err';
+      msg.textContent = 'تعذّر تحميل قائمة المشاريع من الشيت — تم عرض القائمة الاحتياطية.';
+    });
+}
+
 // Init
 document.getElementById('d').value = new Date().toISOString().slice(0,10);
+loadProjects();
 try { const r = localStorage.getItem(SK); if (r) visits = JSON.parse(r); } catch(e) {}
 initPhases();
 </script>
