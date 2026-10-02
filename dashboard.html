@@ -600,49 +600,31 @@ async function loadData() {
 }
 
 function parseCSV(csv) {
-  const lines = csv.trim().split('\n');
-  if (lines.length < 2) return [];
+  // قارئ CSV واحد: يحافظ على الخانات الفارغة في مكانها، ويدعم النص بين علامات تنصيص
+  const rows = [];
+  let row = [], cur = '', inQ = false;
+  for (let i = 0; i < csv.length; i++) {
+    const c = csv[i];
+    if (inQ) {
+      if (c === '"') { if (csv[i+1] === '"') { cur += '"'; i++; } else inQ = false; }
+      else cur += c;
+    } else if (c === '"') inQ = true;
+    else if (c === ',') { row.push(cur.trim()); cur = ''; }
+    else if (c === '\n' || c === '\r') {
+      if (c === '\r' && csv[i+1] === '\n') i++;
+      row.push(cur.trim()); rows.push(row); row = []; cur = '';
+    } else cur += c;
+  }
+  if (cur !== '' || row.length) { row.push(cur.trim()); rows.push(row); }
+
   const result = [];
-  for (let i = 1; i < lines.length; i++) {
-    const cols = [];
-    let cur = '', inQ = false;
-    for (let c of lines[i]) {
-      if (c === '"') { inQ = !inQ; }
-      else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
-      else { cur += c; }
-    }
-    cols.push(cur.trim());
-    const date = cols[0] || '';
+  for (let i = 1; i < rows.length; i++) {
+    const c = rows[i];
+    const date = c[0] || '';
     if (date.match(/\d{4}-\d{2}-\d{2}/)) {
       result.push({
-        date, project: cols[1]||'', eng: cols[2]||'',
-        spec: cols[3]||'', phase: cols[4]||'',
-        itemNum: cols[5]||'', itemDesc: cols[6]||'', notes: cols[7]||''
-      });
-    }
-  }
-  return result.sort((a,b) => b.date.localeCompare(a.date));
-}
-
-
-function parseCSV(csv) {
-  const lines = csv.trim().split('\n');
-  if (lines.length < 2) return [];
-  
-  const result = [];
-  for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].match(/(".*?"|[^,]+)(?=,|$)/g) || [];
-    const clean = cols.map(c => c.replace(/^"|"$/g,'').replace(/""/g,'"').trim());
-    if (clean[0] && clean[0].match(/\d{4}-\d{2}-\d{2}/)) {
-      result.push({
-        date: clean[0] || '',
-        project: clean[1] || '',
-        eng: clean[2] || '',
-        spec: clean[3] || '',
-        phase: clean[4] || '',
-        itemNum: clean[5] || '',
-        itemDesc: clean[6] || '',
-        notes: clean[7] || ''
+        date, project: c[1]||'', eng: c[2]||'', spec: c[3]||'', phase: c[4]||'',
+        itemNum: c[5]||'', itemDesc: c[6]||'', notes: c[7]||''
       });
     }
   }
@@ -662,7 +644,7 @@ function processData() {
   document.getElementById('k-bander').textContent = allData.filter(v => v.project.includes('بندر')).length;
   document.getElementById('k-month').textContent = allData.filter(v => v.date.startsWith(thisMonth)).length;
   document.getElementById('total-count').textContent = allData.length + ' زيارة';
-  document.getElementById('last-update').textContent = now.toLocaleDateString('ar-SA') + ' ' + now.toLocaleTimeString('ar-SA', {hour:'2-digit',minute:'2-digit'});
+  document.getElementById('last-update').textContent = now.toLocaleDateString('ar-SA');
   document.getElementById('print-date').textContent = now.toLocaleDateString('ar-SA');
   
   buildCharts();
