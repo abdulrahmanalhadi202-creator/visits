@@ -567,7 +567,10 @@ let allData = [];
 let chartMonthly, chartSpec;
 
 function doLogin() {
-  const v = document.getElementById('pw-input').value;
+  // يقبل الأرقام العربية (٢٠٣٠) والفارسية (۲۰۳۰) والإنجليزية (2030)
+  const v = document.getElementById('pw-input').value.trim()
+    .replace(/[٠-٩]/g, d => d.charCodeAt(0) - 0x0660)
+    .replace(/[۰-۹]/g, d => d.charCodeAt(0) - 0x06F0);
   const err = document.getElementById('pw-err');
   if (v === PASS) {
     document.getElementById('login-screen').style.display = 'none';
